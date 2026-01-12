@@ -1,0 +1,196 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: docmaster
+      POSTGRES_PASSWORD: docmaster
+      POSTGRES_DB: docmaster
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docmaster"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Api/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=docmaster;Username=docmaster;Password=docmaster
+      - ErasureCoding__DataShards=6
+      - ErasureCoding__ParityShards=3
+      - ErasureCoding__ChunkSizeBytes=10485760
+      - ErasureCoding__SmallObjectThreshold=65536
+      - ErasureCoding__MaxFileSizeBytes=1073741824
+      - NodeHealth__PollIntervalSeconds=10
+      - NodeHealth__MaxConsecutiveFailures=3
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  storage-node-01:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node01_data:/data
+
+  storage-node-02:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5002:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node02_data:/data
+
+  storage-node-03:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5003:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node03_data:/data
+
+  storage-node-04:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5004:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node04_data:/data
+
+  storage-node-05:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5005:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node05_data:/data
+
+  storage-node-06:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5006:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node06_data:/data
+
+  storage-node-07:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5007:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node07_data:/data
+
+  storage-node-08:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5008:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node08_data:/data
+
+  storage-node-09:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5009:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node09_data:/data
+
+  storage-node-10:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5010:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node10_data:/data
+
+  storage-node-11:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5011:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node11_data:/data
+
+  storage-node-12:
+    build:
+      context: ..
+      dockerfile: src/DocMaster.Agent.Grpc/Dockerfile
+    ports:
+      - "5012:5001"
+    environment:
+      - Agent__BasePath=/data
+      - Agent__GrpcPort=5001
+    volumes:
+      - node12_data:/data
+
+volumes:
+  postgres_data:
+  node01_data:
+  node02_data:
+  node03_data:
+  node04_data:
+  node05_data:
+  node06_data:
+  node07_data:
+  node08_data:
+  node09_data:
+  node10_data:
+  node11_data:
+  node12_data:
