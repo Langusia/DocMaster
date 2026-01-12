@@ -154,12 +154,4 @@ For RS(6,3) erasure coding:
 - **Recommended**: 12 nodes (can lose 3 nodes and still write)
 - **Production**: 12+ nodes across multiple availability zones
 
-## License
-
-MIT
-
 ---
-
-<p align="center">
-  Built with ❤️ and .NET 9.0
-</p>
