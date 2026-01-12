@@ -368,8 +368,18 @@ public class ObjectService : IObjectService
                     $"Only {validShards.Count} shards available, need {_ecOptions.DataShards}");
             }
 
-            // Decode chunk
-            var chunkData = _erasureCoder.Decode(validShards, (int)chunk.SizeBytes);
+            // Decode chunk - build shard matrix and present array
+            var totalShards = _ecOptions.DataShards + _ecOptions.ParityShards;
+            var shardMatrix = new byte[totalShards][];
+            var presentShards = new bool[totalShards];
+
+            foreach (var (shardIndex, data) in validShards)
+            {
+                shardMatrix[shardIndex] = data;
+                presentShards[shardIndex] = true;
+            }
+
+            var chunkData = _erasureCoder.Decode(shardMatrix, presentShards, (int)chunk.SizeBytes);
             await outputStream.WriteAsync(chunkData, ct);
         }
 
