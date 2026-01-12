@@ -17,6 +17,7 @@ public class ObjectService : IObjectService
     private readonly IShardUploader _shardUploader;
     private readonly IShardDownloader _shardDownloader;
     private readonly INodeCache _nodeCache;
+    private readonly IGrpcChannelFactory _channelFactory;
     private readonly ErasureCodingOptions _ecOptions;
     private readonly MimeDetectionOptions _mimeOptions;
     private readonly ILogger<ObjectService> _logger;
@@ -25,24 +26,27 @@ public class ObjectService : IObjectService
     public ObjectService(
         DocMasterDbContext db,
         IStreamProcessor streamProcessor,
+        IErasureCoder erasureCoder,
         INodeSelector nodeSelector,
         IShardUploader shardUploader,
         IShardDownloader shardDownloader,
         INodeCache nodeCache,
+        IGrpcChannelFactory channelFactory,
         IOptions<ErasureCodingOptions> ecOptions,
         IOptions<MimeDetectionOptions> mimeOptions,
-        ILogger<ObjectService> logger, IErasureCoder erasureCoder)
+        ILogger<ObjectService> logger)
     {
         _db = db;
         _streamProcessor = streamProcessor;
+        _erasureCoder = erasureCoder;
         _nodeSelector = nodeSelector;
         _shardUploader = shardUploader;
         _shardDownloader = shardDownloader;
         _nodeCache = nodeCache;
+        _channelFactory = channelFactory;
         _ecOptions = ecOptions.Value;
         _mimeOptions = mimeOptions.Value;
         _logger = logger;
-        _erasureCoder = erasureCoder;
     }
 
     public async Task<Result<UploadResponse>> UploadAsync(
@@ -474,12 +478,24 @@ public class ObjectService : IObjectService
 
     private async Task DeleteFromNodeAsync(string objectId, CachedNode node, CancellationToken ct)
     {
-        var channel = _shardDownloader.GetType().Assembly
-            .GetType("DocMaster.Api.Services.GrpcChannelFactory"); // Workaround
+        var channel = _channelFactory.GetChannel(node.GrpcAddress);
+        var client = new DocMaster.Agent.Grpc.StorageService.StorageServiceClient(channel);
 
-        // For now, we'll skip actual deletion as we need access to the channel factory
-        // In production, this would call the Delete gRPC method
-        await Task.CompletedTask;
+        var response = await client.DeleteAsync(new DocMaster.Agent.Grpc.DeleteRequest
+        {
+            ObjectId = objectId
+        }, cancellationToken: ct);
+
+        if (!response.Success)
+        {
+            _logger.LogWarning("Failed to delete object {ObjectId} from node {NodeId}: {Error}",
+                objectId, node.Id, response.Error);
+        }
+        else
+        {
+            _logger.LogDebug("Deleted {ShardsDeleted} shards for object {ObjectId} from node {NodeId}",
+                response.ShardsDeleted, objectId, node.Id);
+        }
     }
 
     private static ObjectInfo MapToObjectInfo(StorageObject obj, string bucketName)
