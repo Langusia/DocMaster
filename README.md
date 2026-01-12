@@ -16,7 +16,7 @@
 
 ## Features
 
-- **Erasure Coding** - RS(6,3) encoding provides fault tolerance with only 1.5x storage overhead
+- **Erasure Coding** - RS(x,y) encoding provides fault tolerance with ~ 1.5x storage overhead
 - **Smart Replication** - Small files (≤64KB) use simple replication for efficiency
 - **Automatic MIME Detection** - Magic byte detection with Office file support
 - **Streaming Uploads** - Memory-efficient streaming for large files up to 1GB
