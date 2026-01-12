@@ -54,7 +54,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/DocMaster.git
+git clone https://github.com/Langusia/DocMaster
 cd DocMaster
 
 # Start all services (API + 12 storage nodes + PostgreSQL)
