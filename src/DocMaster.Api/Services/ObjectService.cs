@@ -168,7 +168,8 @@ public class ObjectService : IObjectService
         }
     }
 
-    private async Task<Result<bool>> UploadReplicatedAsync(string objectId, ProcessedFile processed, CancellationToken ct)
+    private async Task<Result<bool>> UploadReplicatedAsync(string objectId, ProcessedFile processed,
+        CancellationToken ct)
     {
         var selection = _nodeSelector.SelectForReplicatedWrite(ReplicaCount);
         if (!selection.Success)
@@ -213,7 +214,8 @@ public class ObjectService : IObjectService
         return Result<bool>.Ok(true);
     }
 
-    private async Task<Result<bool>> UploadErasureCodedAsync(string objectId, ProcessedFile processed, CancellationToken ct)
+    private async Task<Result<bool>> UploadErasureCodedAsync(string objectId, ProcessedFile processed,
+        CancellationToken ct)
     {
         var totalShards = _ecOptions.TotalShards;
         var selection = _nodeSelector.SelectForErasureCodedWrite(totalShards);
@@ -357,26 +359,27 @@ public class ObjectService : IObjectService
                 });
 
             var results = await Task.WhenAll(downloadTasks);
-            var validShards = results
-                .Where(r => r.Data != null)
-                .ToDictionary(r => r.ShardIndex, r => r.Data!);
 
-            if (validShards.Count < _ecOptions.DataShards)
-            {
-                return Result<Stream>.Fail(
-                    ErrorCodes.DownloadFailed,
-                    $"Only {validShards.Count} shards available, need {_ecOptions.DataShards}");
-            }
-
-            // Decode chunk - build shard matrix and present array
             var totalShards = _ecOptions.DataShards + _ecOptions.ParityShards;
             var shardMatrix = new byte[totalShards][];
             var presentShards = new bool[totalShards];
+            var validCount = 0;
 
-            foreach (var (shardIndex, data) in validShards)
+            foreach (var r in results)
             {
-                shardMatrix[shardIndex] = data;
-                presentShards[shardIndex] = true;
+                if (r.Data != null)
+                {
+                    shardMatrix[r.ShardIndex] = r.Data;
+                    presentShards[r.ShardIndex] = true;
+                    validCount++;
+                }
+            }
+
+            if (validCount < _ecOptions.DataShards)
+            {
+                return Result<Stream>.Fail(
+                    ErrorCodes.DownloadFailed,
+                    $"Only {validCount} shards available, need {_ecOptions.DataShards}");
             }
 
             var chunkData = _erasureCoder.Decode(shardMatrix, presentShards, (int)chunk.SizeBytes);
@@ -392,7 +395,8 @@ public class ObjectService : IObjectService
         var obj = await GetObjectAsync(bucketName, key, ct);
         if (obj == null)
         {
-            return Result<ObjectInfo>.Fail(ErrorCodes.ObjectNotFound, $"Object '{key}' not found in bucket '{bucketName}'");
+            return Result<ObjectInfo>.Fail(ErrorCodes.ObjectNotFound,
+                $"Object '{key}' not found in bucket '{bucketName}'");
         }
 
         return Result<ObjectInfo>.Ok(MapToObjectInfo(obj, bucketName));
@@ -415,7 +419,8 @@ public class ObjectService : IObjectService
         var bucket = await _db.Buckets.FirstOrDefaultAsync(b => b.Name == bucketName, ct);
         if (bucket == null)
         {
-            return Result<IReadOnlyList<ObjectInfo>>.Fail(ErrorCodes.BucketNotFound, $"Bucket '{bucketName}' not found");
+            return Result<IReadOnlyList<ObjectInfo>>.Fail(ErrorCodes.BucketNotFound,
+                $"Bucket '{bucketName}' not found");
         }
 
         var objects = await _db.Objects
