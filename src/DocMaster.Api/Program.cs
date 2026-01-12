@@ -3,6 +3,7 @@ using DocMaster.Api.Data;
 using DocMaster.Api.Services;
 using DocMaster.ErasureCoding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +22,8 @@ builder.Services.Configure<MimeDetectionOptions>(
 builder.Services.AddDbContext<DocMasterDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(connectionString)
+        .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
 // Services
