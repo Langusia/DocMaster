@@ -1,3 +1,4 @@
+using System.Reflection;
 using DocMaster.Api.Configuration;
 using DocMaster.Api.Data;
 using DocMaster.Api.Services;
@@ -5,6 +6,7 @@ using DocMaster.ErasureCoding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,7 +51,32 @@ builder.Services.AddHostedService<NodeHealthService>();
 // API
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "DocMaster API",
+        Description = "Distributed Object Storage with Erasure Coding - A fault-tolerant storage system built with .NET 9.0",
+        Contact = new OpenApiContact
+        {
+            Name = "DocMaster",
+            Url = new Uri("https://github.com/Langusia/DocMaster")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT",
+            Url = new Uri("https://opensource.org/licenses/MIT")
+        }
+    });
+
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+});
 
 var app = builder.Build();
 
@@ -63,7 +90,12 @@ using (var scope = app.Services.CreateScope())
 // Configure pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DocMaster API v1");
+        options.RoutePrefix = string.Empty;
+    });
 }
 
 app.UseRouting();
