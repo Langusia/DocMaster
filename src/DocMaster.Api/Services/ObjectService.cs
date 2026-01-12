@@ -12,6 +12,7 @@ public class ObjectService : IObjectService
 {
     private readonly DocMasterDbContext _db;
     private readonly IStreamProcessor _streamProcessor;
+    private readonly IErasureCoder _erasureCoder;
     private readonly INodeSelector _nodeSelector;
     private readonly IShardUploader _shardUploader;
     private readonly IShardDownloader _shardDownloader;
@@ -30,7 +31,7 @@ public class ObjectService : IObjectService
         INodeCache nodeCache,
         IOptions<ErasureCodingOptions> ecOptions,
         IOptions<MimeDetectionOptions> mimeOptions,
-        ILogger<ObjectService> logger)
+        ILogger<ObjectService> logger, IErasureCoder erasureCoder)
     {
         _db = db;
         _streamProcessor = streamProcessor;
@@ -41,6 +42,7 @@ public class ObjectService : IObjectService
         _ecOptions = ecOptions.Value;
         _mimeOptions = mimeOptions.Value;
         _logger = logger;
+        _erasureCoder = erasureCoder;
     }
 
     public async Task<Result<UploadResponse>> UploadAsync(
@@ -216,7 +218,6 @@ public class ObjectService : IObjectService
             return Result<bool>.Fail(ErrorCodes.InsufficientNodes, selection.Error!);
         }
 
-        var encoder = new ReedSolomonEncoder(_ecOptions.DataShards, _ecOptions.ParityShards);
 
         foreach (var chunk in processed.Chunks)
         {
@@ -234,7 +235,7 @@ public class ObjectService : IObjectService
             await _db.SaveChangesAsync(ct);
 
             // Encode to shards
-            var shards = encoder.Encode(chunk.Data);
+            var shards = _erasureCoder.Encode(chunk.Data);
 
             // Upload shards in parallel
             var uploadTasks = shards.Select(async (shardData, shardIndex) =>
@@ -332,7 +333,6 @@ public class ObjectService : IObjectService
             .Include(c => c.Shards)
             .ToListAsync(ct);
 
-        var decoder = new ReedSolomonDecoder(_ecOptions.DataShards, _ecOptions.ParityShards);
         var outputStream = new MemoryStream();
 
         foreach (var chunk in chunks)
@@ -365,7 +365,7 @@ public class ObjectService : IObjectService
             }
 
             // Decode chunk
-            var chunkData = decoder.Decode(validShards, (int)chunk.SizeBytes);
+            var chunkData = _erasureCoder.Decode(validShards, (int)chunk.SizeBytes);
             await outputStream.WriteAsync(chunkData, ct);
         }
 

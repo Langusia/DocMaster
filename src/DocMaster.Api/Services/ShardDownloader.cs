@@ -1,5 +1,6 @@
 using DocMaster.Agent.Grpc;
 using DocMaster.Api.Configuration;
+using Grpc.Core;
 using Microsoft.Extensions.Options;
 
 namespace DocMaster.Api.Services;

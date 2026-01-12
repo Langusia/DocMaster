@@ -1,7 +1,9 @@
 using DocMaster.Api.Configuration;
 using DocMaster.Api.Data;
 using DocMaster.Api.Services;
+using DocMaster.ErasureCoding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,11 @@ builder.Services.AddScoped<IShardDownloader, ShardDownloader>();
 builder.Services.AddScoped<IObjectService, ObjectService>();
 builder.Services.AddScoped<IBucketService, BucketService>();
 builder.Services.AddScoped<INodeService, NodeService>();
+builder.Services.AddSingleton<IErasureCoder>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<ErasureCodingOptions>>().Value;
+    return new IsaLErasureCoder(options.DataShards, options.ParityShards);
+});
 
 // Background services
 builder.Services.AddHostedService<NodeHealthService>();
