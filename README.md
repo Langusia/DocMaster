@@ -16,7 +16,7 @@
 
 ## Features
 
-- **Erasure Coding** - RS(6,3) encoding provides fault tolerance with only 1.5x storage overhead
+- **Erasure Coding** - RS(x,y) encoding provides fault tolerance with ~ 1.5x storage overhead
 - **Smart Replication** - Small files (≤64KB) use simple replication for efficiency
 - **Automatic MIME Detection** - Magic byte detection with Office file support
 - **Streaming Uploads** - Memory-efficient streaming for large files up to 1GB
@@ -54,7 +54,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/DocMaster.git
+git clone https://github.com/Langusia/DocMaster
 cd DocMaster
 
 # Start all services (API + 12 storage nodes + PostgreSQL)
@@ -154,12 +154,4 @@ For RS(6,3) erasure coding:
 - **Recommended**: 12 nodes (can lose 3 nodes and still write)
 - **Production**: 12+ nodes across multiple availability zones
 
-## License
-
-MIT
-
 ---
-
-<p align="center">
-  Built with ❤️ and .NET 9.0
-</p>
