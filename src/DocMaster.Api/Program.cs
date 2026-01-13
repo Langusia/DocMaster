@@ -54,7 +54,8 @@ builder.Services.AddOpenApiDocument(config =>
 {
     config.Title = "DocMaster API";
     config.Version = "v1";
-    config.Description = "Distributed Object Storage with Erasure Coding - A fault-tolerant storage system built with .NET 9.0";
+    config.Description =
+        "Distributed Object Storage with Erasure Coding - A fault-tolerant storage system built with .NET 9.0";
 });
 
 var app = builder.Build();
@@ -66,22 +67,19 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
-// Configure pipeline
-if (app.Environment.IsDevelopment())
+
+app.UseOpenApi();
+app.UseSwaggerUi(config =>
 {
-    app.UseOpenApi();
-    app.UseSwaggerUi(config =>
-    {
-        config.DocumentTitle = "DocMaster API";
-        config.Path = "/swagger";
-        config.DocumentPath = "/swagger/{documentName}/swagger.json";
-    });
-    app.UseReDoc(config =>
-    {
-        config.Path = "/redoc";
-        config.DocumentPath = "/swagger/{documentName}/swagger.json";
-    });
-}
+    config.DocumentTitle = "DocMaster API";
+    config.Path = "/swagger";
+    config.DocumentPath = "/swagger/{documentName}/swagger.json";
+});
+app.UseReDoc(config =>
+{
+    config.Path = "/redoc";
+    config.DocumentPath = "/swagger/{documentName}/swagger.json";
+});
 
 app.UseRouting();
 app.MapControllers();
@@ -89,4 +87,6 @@ app.MapControllers();
 await app.RunAsync();
 
 // Make Program accessible for integration tests
-public partial class Program { }
+public partial class Program
+{
+}
