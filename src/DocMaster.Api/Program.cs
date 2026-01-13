@@ -1,4 +1,3 @@
-using System.Reflection;
 using DocMaster.Api.Configuration;
 using DocMaster.Api.Data;
 using DocMaster.Api.Services;
@@ -51,31 +50,11 @@ builder.Services.AddHostedService<NodeHealthService>();
 // API
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.Services.AddOpenApiDocument(config =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "DocMaster API",
-        Description = "Distributed Object Storage with Erasure Coding - A fault-tolerant storage system built with .NET 9.0",
-        Contact = new OpenApiContact
-        {
-            Name = "DocMaster",
-            Url = new Uri("https://github.com/Langusia/DocMaster")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "MIT",
-            Url = new Uri("https://opensource.org/licenses/MIT")
-        }
-    });
-
-    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-    if (File.Exists(xmlPath))
-    {
-        options.IncludeXmlComments(xmlPath);
-    }
+    config.Title = "DocMaster API";
+    config.Version = "v1";
+    config.Description = "Distributed Object Storage with Erasure Coding - A fault-tolerant storage system built with .NET 9.0";
 });
 
 var app = builder.Build();
@@ -90,11 +69,17 @@ using (var scope = app.Services.CreateScope())
 // Configure pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
+    app.UseOpenApi();
+    app.UseSwaggerUi(config =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DocMaster API v1");
-        options.RoutePrefix = string.Empty;
+        config.DocumentTitle = "DocMaster API";
+        config.Path = "/swagger";
+        config.DocumentPath = "/swagger/{documentName}/swagger.json";
+    });
+    app.UseReDoc(config =>
+    {
+        config.Path = "/redoc";
+        config.DocumentPath = "/swagger/{documentName}/swagger.json";
     });
 }
 
